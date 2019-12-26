@@ -56,11 +56,6 @@ module "cartography" {
 }
 ```
 
-## License
-
-Copyright: &copy; 2019 Kinnaird McQuade
-
-
 ## References
 
 * [Neo4j configuration settings](https://neo4j.com/docs/operations-manual/current/reference/configuration-settings/)
