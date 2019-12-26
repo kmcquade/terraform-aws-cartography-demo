@@ -2,7 +2,9 @@
 
 This module creates the infrastructure for Lyft's [Cartography](https://github.com/lyft/cartography#installation) in AWS.
 
-> **Obligatory disclaimer**: This is meant to be a starting point / POC for anyone testing out Cartography. I made this for my own purposes. It is NOT meant for use in a production environment.
+## Disclaimer
+
+This is meant to be a starting point / POC for anyone testing out Cartography. I made this for my own purposes. It is NOT meant for use in a production environment.
 
 ## Requirements
 
