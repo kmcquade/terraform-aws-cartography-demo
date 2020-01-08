@@ -117,6 +117,7 @@ Description=Cartography
 Documentation=https://github.com/lyft/cartography
 Requires=network-online.target neo4j.service
 After=network-online.target neo4j.service
+Wants=cartography-refresh.timer
 
 [Service]
 ExecStart=/opt/cartography/venv/bin/python3 -m cartography --neo4j-uri bolt://localhost:7687
@@ -167,7 +168,37 @@ chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /home/${CARTOGRAPHY_USER}/.aws/
 # Temporary fix for cartography to get around Okta error
 # Make adjustment until https://github.com/lyft/cartography/pull/216 is fixed
 # ---------------------------------------------------------------------------------------------------------------------
-sed -i "s/if not config.okta_api_key/if 'okta_api_key' not in config/g" /opt/cartography/cartography/intel/okta/__init__.py
+#sed -i "s/if not config.okta_api_key/if 'okta_api_key' not in config/g" /opt/cartography/cartography/intel/okta/__init__.py
+sed -i "s/route53.sync(neo4j_session, boto3_session, account_id, sync_tag)//g" /opt/cartography/cartography/intel/aws/__init__.py
+sed -i "s/elasticsearch.sync(neo4j_session, boto3_session, account_id, sync_tag)//g" /opt/cartography/cartography/intel/aws/__init__.py
+sed -i "s/run_cleanup_job('aws_account_dns_cleanup.json', neo4j_session, common_job_parameters)//g" /opt/cartography/cartography/intel/aws/__init__.py
+#sed -i "s/instance.region = {Region}, instance.lastupdated = {aws_update_tag}/instance.region = {Region}, instance.lastupdated = {aws_update_tag}, instance.iaminstanceprofile = {IamInstanceProfile}/g" /opt/cartography/cartography/intel/aws/ec2.py
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Refresh cartography every 15 minutes. Might be too much
+# ---------------------------------------------------------------------------------------------------------------------
+cat << 'eof' >> /etc/systemd/system/cartography-refresh.timer
+[Unit]
+Description=Cartography refresh every 15 minutes
+Requires=cartography.service
+
+[Timer]
+Unit=cartography.service
+OnUnitInactiveSec=15m
+RandomizedDelaySec=15m
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
+eof
+
+rm -f /opt/cartography/cartography/intel/aws/ec2.py
+wget "https://gist.githubusercontent.com/kmcquade/9bbda31d33d817bbcaece3ec6809e51d/raw/7f3e70833e7d6f0b2237cbde74a5ed90a11c720a/ec2.py" -O /opt/cartography/cartography/intel/aws/ec2.py
+chown cartography:cartography /opt/cartography/cartography/intel/aws/ec2.py
 
 systemctl daemon-reload
+systemctl enable cartography-refresh.timer
+systemctl list-timers --all
+systemctl start cartography-refresh.timer
+
 systemctl start cartography
