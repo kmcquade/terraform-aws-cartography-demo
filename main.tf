@@ -34,7 +34,7 @@ resource "aws_ebs_volume" "cartography" {
   availability_zone = module.network.azs[0]
   size              = 20
   encrypted         = true
-  kms_key_id        = module.kms_key.key_id
+  kms_key_id        = module.kms_key.key_arn
   tags              = module.cartography_label.tags
 }
 
