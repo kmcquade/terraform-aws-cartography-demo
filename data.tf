@@ -14,7 +14,7 @@ data "template_file" "cartography_userdata" {
   vars = {
     neo4j_config        = data.template_file.neo4j_config.rendered
     CARTOGRAPHY_USER    = "cartography"
-    CARTOGRAPHY_VERSION = "0.13.1"
+    CARTOGRAPHY_VERSION = "0.14.0"
     ENVIRONMENT_FILE    = "/opt/cartography/etc/cartography.d/cartography.sh"
   }
 }
