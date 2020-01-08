@@ -3,7 +3,6 @@ module "cartography_label" {
   namespace    = var.namespace
   stage        = var.stage
   name         = var.name
-  attributes   = ["cartography"]
   delimiter    = var.delimiter
   convert_case = var.convert_case
   tags         = var.default_tags

@@ -40,6 +40,11 @@ variable "key_name" {
   description = "The name of the SSH key in AWS to use for accessing the EC2 instance."
 }
 
+variable "kms_key_alias" {
+  description = "The KMS key alias to use for the EBS Volume"
+  default     = "alias/cartography"
+}
+
 ##### Networking
 variable "vpc_cidr" {
   description = "The CIDR block for the VPC."
