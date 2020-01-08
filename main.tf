@@ -30,6 +30,7 @@ module "kms_key" {
 }
 
 resource "aws_ebs_volume" "cartography" {
+  count             = 1
   availability_zone = module.network.azs[0]
   size              = 20
   encrypted         = true
@@ -37,9 +38,9 @@ resource "aws_ebs_volume" "cartography" {
   tags              = module.cartography_label.tags
 }
 
-
-resource "aws_volume_attachment" "cartography" {
+resource "aws_volume_attachment" "this_ec2" {
+  count       = 1
   device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.cartography.id
-  instance_id = module.cartography_instance.id
+  volume_id   = aws_ebs_volume.cartography[count.index].id
+  instance_id = module.cartography_instance.id[count.index]
 }
