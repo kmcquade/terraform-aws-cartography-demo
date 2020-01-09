@@ -40,7 +40,7 @@ terraform apply -auto-approve
 ```text
 MATCH (n:EC2Instance) 
 WHERE  (n.iaminstanceprofile) starts with 'arn' and (n.publicdnsname) contains '.'
-RETURN n.instanceid, n.iaminstanceprofile, n.publicdnsname
+RETURN n.region, n.instanceid, n.iaminstanceprofile, n.publicdnsname
 ```
 
 
