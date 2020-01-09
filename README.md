@@ -33,7 +33,15 @@ terraform apply -auto-approve
 
 * Go to that IP address in your web browser and suffix it with port 7474. Like this: http://1.2.3.4:7474
 
-* It will bring you to the Neo4j database login. Enter `neo4j` as your username and password. Enjoy!
+* It will bring you to the Neo4j database login. Enter `bolt` as your username and password.
+
+### Query for privileged public instances
+
+```text
+MATCH (n:EC2Instance) 
+WHERE  (n.iaminstanceprofile) starts with 'arn' and (n.publicdnsname) contains '.'
+RETURN n.instanceid, n.iaminstanceprofile, n.publicdnsname
+```
 
 
 ## Usage
