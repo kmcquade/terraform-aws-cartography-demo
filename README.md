@@ -69,14 +69,6 @@ module "cartography" {
 }
 ```
 
-## Providers
-
-| Name | Version |
-|------|---------|
-| aws | n/a |
-| random | n/a |
-| template | n/a |
-
 ## Inputs
 
 | Name | Description | Type | Default | Required |
@@ -95,6 +87,7 @@ module "cartography" {
 | ec2\_ami\_owner\_filter | List of AMI owners to limit search. Defaults to `amazon`. | `string` | `"amazon"` | no |
 | enable\_bucket\_versioning | Set to true to enable bucket versioning | `bool` | `false` | no |
 | force\_destroy | A boolean string that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable. | `bool` | `true` | no |
+| instance\_type | The size of the Ec2 instance. Defaults to t2.medium | `string` | `"t2.medium"` | no |
 | key\_name | The name of the SSH key in AWS to use for accessing the EC2 instance. | `any` | n/a | yes |
 | kms\_key\_alias | The KMS key alias to use for the EBS Volume | `string` | `"alias/cartography"` | no |
 | name | Name, which could be the name of your solution or app. Third item in naming sequence. | `any` | n/a | yes |
@@ -103,14 +96,18 @@ module "cartography" {
 | region | The AWS region for these resources, such as us-east-1. | `any` | n/a | yes |
 | stage | Stage, e.g. `prod`, `staging`, `dev`, or `test`. Second item in naming sequence. | `any` | n/a | yes |
 | subnet\_azs | Subnets will be created in these availability zones. | `list(string)` | <code><pre>[<br>  "us-east-1a"<br>]<br></pre></code> | no |
+| volume\_size | The disk size for the EC2 instance root volume. Defaults to 50 (for 50GB) | `number` | `50` | no |
 | vpc\_cidr | The CIDR block for the VPC. | `string` | `"10.1.1.0/24"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
+| bucket | The name of the S3 bucket |
+| bucket\_config\_path | The path to the cartography cross account config stashed in s3 |
 | public\_ip | The public IP address of the EC2 instance running Cartography. |
-| zREADME | n/a |
+| root\_block\_device\_volume\_ids | List of volume IDs of root block devices of instances |
+| zREADME | Post-deploy instructions |
 
 ## References
 

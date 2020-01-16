@@ -43,9 +43,11 @@ output "root_block_device_volume_ids" {
 }
 
 output "bucket" {
-  value = module.s3_bucket.bucket_id
+  description = "The name of the S3 bucket"
+  value       = module.s3_bucket.bucket_id
 }
 
 output "bucket_config_path" {
-  value = "s3://${aws_s3_bucket_object.cartography_config.bucket}/${aws_s3_bucket_object.cartography_config.key}"
+  description = "The path to the cartography cross account config stashed in s3"
+  value       = "s3://${aws_s3_bucket_object.cartography_config.bucket}/${aws_s3_bucket_object.cartography_config.key}"
 }
