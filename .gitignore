@@ -4,6 +4,9 @@ tmp
 _notes
 results.*
 
+# Test environment
+examples/private/*
+
 ##### HashiCorp #####
 #### Terraform
 #  Local .terraform directories
@@ -17,7 +20,7 @@ results.*
 
 # .tfvars files
 **/*.tfvars
-#!terraform.tfvars
+**/terraform.tfvars
 
 #### Vagrant
 .vagrant
@@ -67,18 +70,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-########## Terraform ##########
-#  Local .terraform directories
-**/.terraform/*
-*.plan
-
-# .tfstate files
-*.tfstate
-*.tfstate.*
-
-# .tfvars files
-*.tfvars
-!terraform.tfvars
 
 ########## Python ##########
 # Byte-compiled / optimized / DLL files

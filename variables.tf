@@ -28,6 +28,18 @@ variable "create_vpc" {
   default     = true
 }
 
+
+variable "create_bucket" {
+  description = "Set to false to disable creation of an S3 bucket for cartography config"
+  default     = true
+}
+
+variable "enable_bucket_versioning" {
+  description = "Set to true to enable bucket versioning"
+  default     = false
+}
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # RESOURCE VALUES
 # These variables pass in actual values to configure resources. CIDRs, Instance Sizes, etc.
@@ -38,6 +50,16 @@ variable "cartography_instance_profile_name" {
 
 variable "key_name" {
   description = "The name of the SSH key in AWS to use for accessing the EC2 instance."
+}
+
+variable "instance_type" {
+  description = "The size of the Ec2 instance. Defaults to t2.medium"
+  default     = "t2.medium"
+}
+
+variable "volume_size" {
+  description = "The disk size for the EC2 instance root volume. Defaults to 50 (for 50GB)"
+  default     = 50
 }
 
 variable "kms_key_alias" {
@@ -71,6 +93,12 @@ variable "allowed_inbound_cidr_blocks" {
   type        = list(string)
 }
 
+# S3 bucket
+variable "force_destroy" {
+  description = "A boolean string that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
+  default     = true
+}
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # RESOURCE REFERENCES
@@ -86,6 +114,11 @@ variable "ec2_ami_name_filter" {
   description = "The name of the AMI to search for. Defaults to amzn2-ami-hvm-2.0.2019*-x86_64-ebs"
   default     = "amzn2-ami-hvm-2.0.2019*-x86_64-ebs"
   type        = string
+}
+
+variable "cartography_config_rendered" {
+  description = "The ~/.aws/config file for cartography user. Use this for gathering data from multiple accounts. If no value is set, it will just set the default config."
+  default     = ""
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

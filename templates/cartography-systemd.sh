@@ -59,24 +59,22 @@ systemctl restart neo4j
 # ---------------------------------------------------------------------------------------------------------------------
 
 #### User specific installation
-CARTOGRAPHY_USER="cartography" # also the same as the group
-CARTOGRAPHY_VERSION="0.13.1"
 # Create a dedicated service user
-useradd -r -s /bin/false ${CARTOGRAPHY_USER}
-groupadd ${CARTOGRAPHY_USER}
+useradd -r -s /bin/false ${cartography_user}
+groupadd ${cartography_user}
 # Add users to the cartography group
-usermod -aG ${CARTOGRAPHY_USER} vagrant
+usermod -aG ${cartography_user} cartography
 # This one is necessary so the systemd service can start cartography
-usermod -aG ${CARTOGRAPHY_USER} root
+usermod -aG ${cartography_user} root
 
 #### Download Cartography version and unzip
 yum -y install unzip
-wget https://github.com/lyft/cartography/archive/${CARTOGRAPHY_VERSION}.zip
-unzip ${CARTOGRAPHY_VERSION}.zip
+wget https://github.com/lyft/cartography/archive/${cartography_version}.zip
+unzip ${cartography_version}.zip
 mkdir -p /opt/cartography
-unzip ${CARTOGRAPHY_VERSION}.zip -d /opt/cartography/
-mv /opt/cartography/cartography-${CARTOGRAPHY_VERSION}/* /opt/cartography
-rm -rf /opt/cartography/cartography-${CARTOGRAPHY_VERSION}/
+unzip ${cartography_version}.zip -d /opt/cartography/
+mv /opt/cartography/cartography-${cartography_version}/* /opt/cartography
+rm -rf /opt/cartography/cartography-${cartography_version}/
 
 #### Cartography installation
 # Set up a new Virtualenv in the cartography directory
@@ -84,11 +82,11 @@ python3 -m venv /opt/cartography/venv
 # Activate the virtualenv
 source /opt/cartography/venv/bin/activate
 # Make sure the cartography user owns it, not root
-chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /opt/cartography
+chown -R ${cartography_user}:${cartography_user} /opt/cartography
 # Install it
 /opt/cartography/venv/bin/python3 /opt/cartography/setup.py install
 # Since the setup ran as root, just chown it again so the cartography user owns it
-chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /opt/cartography
+chown -R ${cartography_user}:${cartography_user} /opt/cartography
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Cartography systemd service setup
@@ -96,21 +94,20 @@ chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /opt/cartography
 # Set up the environments file
 # NOTE: Do NOT use this method in production.
 # Run Neo4j in docker and then load the secrets as environment variables with Secrets Manager in ECS or something.
-ENVIRONMENT_FILE="/opt/cartography/etc/cartography.d/cartography.sh"
+#environment_file="/opt/cartography/etc/cartography.d/cartography.sh"
 mkdir -p /opt/cartography/etc/cartography.d/
-cat <<EOF > ${ENVIRONMENT_FILE}
+cat <<EOF > ${environment_file}
 PYTHONPATH=/opt/cartography/venv/lib/python3.7/site-packages/
 NEO4J_PASSWORD_ENV_VAR=neo4j
 NEO4J_USER=neo4j
 PYTHONUNBUFFERED=1
-AWS_CONFIG_FILE=/home/${CARTOGRAPHY_USER}/.aws/config
+AWS_CONFIG_FILE=/home/${cartography_user}/.aws/config
 EOF
 
-chmod 750 ${ENVIRONMENT_FILE}
+chmod 754 ${environment_file}
 # Chown for the environment file and the directories leading to it
-chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /opt/cartography
+chown -R ${cartography_user}:${cartography_user} /opt/cartography
 
-# TODO: Figure out how we can effectively add the `--aws-sync-all-profiles` flag to this command. It wasn't working when I tried it
 cat <<EOF > /etc/systemd/system/cartography.service
 [Unit]
 Description=Cartography
@@ -120,7 +117,7 @@ After=network-online.target neo4j.service
 Wants=cartography-refresh.timer
 
 [Service]
-ExecStart=/opt/cartography/venv/bin/python3 -m cartography --neo4j-uri bolt://localhost:7687
+ExecStart=/opt/cartography/venv/bin/python3 -m cartography --neo4j-uri bolt://localhost:7687 --aws-sync-all-profiles
 WorkingDirectory=/opt/cartography/
 User=cartography
 Group=cartography
@@ -155,14 +152,15 @@ systemctl enable cartography
 # and if so, if we'd use the credentials file to populate the config file.
 
 # Make sure the cartography user can read from the credentials file
-mkdir -p /home/${CARTOGRAPHY_USER}/.aws/
-cat << 'eof' >> /home/${CARTOGRAPHY_USER}/.aws/config
-[default]
-region = us-east-1
-output=json
-eof
+mkdir -p /home/${cartography_user}/.aws/
+aws s3 cp ${aws_config_s3_path} /home/${cartography_user}/.aws/config
+#cat << 'eof' >> /home/${cartography_user}/.aws/config
+#[default]
+#region = us-east-1
+#output=json
+#eof
 
-chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /home/${CARTOGRAPHY_USER}/.aws/
+chown -R ${cartography_user}:${cartography_user} /home/${cartography_user}/.aws/
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Temporary fix for cartography to get around Okta error
@@ -172,19 +170,21 @@ chown -R ${CARTOGRAPHY_USER}:${CARTOGRAPHY_USER} /home/${CARTOGRAPHY_USER}/.aws/
 sed -i "s/route53.sync(neo4j_session, boto3_session, account_id, sync_tag)//g" /opt/cartography/cartography/intel/aws/__init__.py
 sed -i "s/elasticsearch.sync(neo4j_session, boto3_session, account_id, sync_tag)//g" /opt/cartography/cartography/intel/aws/__init__.py
 sed -i "s/run_cleanup_job('aws_account_dns_cleanup.json', neo4j_session, common_job_parameters)//g" /opt/cartography/cartography/intel/aws/__init__.py
+# Until this is merged - https://github.com/lyft/cartography/pull/221/files
+#sed -i "s/instance.region = {Region}, instance.lastupdated = {aws_update_tag}/instance.region = {Region}, instance.lastupdated = {aws_update_tag}, instance.iaminstanceprofile = {IamInstanceProfile}/g" /opt/cartography/cartography/intel/aws/ec2.py
 #sed -i "s/instance.region = {Region}, instance.lastupdated = {aws_update_tag}/instance.region = {Region}, instance.lastupdated = {aws_update_tag}, instance.iaminstanceprofile = {IamInstanceProfile}/g" /opt/cartography/cartography/intel/aws/ec2.py
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Refresh cartography every 15 minutes. Might be too much
+# Refresh cartography every X minutes. Might be too much
 # ---------------------------------------------------------------------------------------------------------------------
 cat << 'eof' >> /etc/systemd/system/cartography-refresh.timer
 [Unit]
-Description=Cartography refresh every 15 minutes
+Description=Cartography refresh every 24 hours
 Requires=cartography.service
 
 [Timer]
 Unit=cartography.service
-OnUnitInactiveSec=15m
+OnUnitInactiveSec=9880m
 RandomizedDelaySec=15m
 AccuracySec=1s
 
@@ -197,8 +197,8 @@ wget "https://gist.githubusercontent.com/kmcquade/9bbda31d33d817bbcaece3ec6809e5
 chown cartography:cartography /opt/cartography/cartography/intel/aws/ec2.py
 
 systemctl daemon-reload
-systemctl enable cartography-refresh.timer
+#systemctl enable cartography-refresh.timer
 systemctl list-timers --all
-systemctl start cartography-refresh.timer
+#systemctl start cartography-refresh.timer
 
 systemctl start cartography
